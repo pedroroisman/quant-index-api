@@ -1,6 +1,6 @@
 import requests
 
-API_KEY = "TU_API_KEY_AQUI"
+API_KEY = "2a0d5658f5204b06bb2d0ce50d9b7b16"
 
 def rsi_medium_index(ticker="AAPL"):
     url = f"https://api.twelvedata.com/rsi?symbol={ticker}&interval=1day&outputsize=100&time_period=14&apikey={API_KEY}"
