@@ -7,7 +7,12 @@ def trend_swing_index(symbol: str) -> dict:
         df = yf.download(symbol, period="3mo", interval="1d")
 
         if df.empty or "Close" not in df:
-            return {"error": "No data retrieved from yfinance"}
+            return {
+                "ticker": symbol,
+                "horizon": "Swing",
+                "indice": 0,
+                "note": "No data available, returning neutral signal"
+            }
 
         df["EMA_rapida"] = df["Close"].ewm(span=5, adjust=False).mean()
         df["EMA_lenta"] = df["Close"].ewm(span=20, adjust=False).mean()
@@ -32,4 +37,10 @@ def trend_swing_index(symbol: str) -> dict:
         }
 
     except Exception as e:
-        return {"error": str(e)}
+        return {
+            "ticker": symbol,
+            "horizon": "Swing",
+            "indice": 0,
+            "note": "Error fetching data, defaulted to neutral",
+            "detail": str(e)
+        }
