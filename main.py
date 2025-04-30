@@ -1,6 +1,7 @@
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from random import random
 
 app = FastAPI()
 
@@ -15,8 +16,7 @@ app.add_middleware(
 @app.get("/indices")
 def obtener_indices():
     acciones = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA"]
-    estrategias = ["Conservative", "Moderate", "Aggressive"]
-    horizontes = ["Intradía", "Swing", "Medium-Term"]
+    horizontes = ["Intraday", "Swing", "Medium-Term"]
 
     resultado = []
 
@@ -25,14 +25,12 @@ def obtener_indices():
             "ticker": accion,
             "estrategias": []
         }
-        for estrategia in estrategias:
-            for horizonte in horizontes:
-                indice_simulado = round(-1 + 2 * __import__("random").random(), 2)
-                data["estrategias"].append({
-                    "tipo": estrategia,
-                    "horizonte": horizonte,
-                    "indice": indice_simulado
-                })
+        for horizonte in horizontes:
+            indice_simulado = round(-1 + 2 * random(), 2)
+            data["estrategias"].append({
+                "horizonte": horizonte,
+                "indice": indice_simulado
+            })
         resultado.append(data)
 
     return {"acciones": resultado}
