@@ -41,4 +41,4 @@ API_KEY = "9SN4VDHWVMONKIJK"
 
 @app.get("/indice_swing")
 def calcular_indice_swing():
-    return trend_swing_index("AAPL", API_KEY)
+    return trend_swing_index("AAPL")

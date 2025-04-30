@@ -1,22 +1,16 @@
 
-import requests
+import yfinance as yf
 import pandas as pd
 
-def trend_swing_index(symbol: str, api_key: str) -> dict:
+def trend_swing_index(symbol: str) -> dict:
     try:
-        url = (
-            f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY_ADJUSTED"
-            f"&symbol={symbol}&outputsize=compact&apikey={api_key}"
-        )
-        response = requests.get(url)
-        data = response.json()
+        df = yf.download(symbol, period="3mo", interval="1d")
 
-        df = pd.DataFrame(data["Time Series (Daily)"]).T
-        df = df.astype(float)
-        df = df.sort_index()
+        if df.empty or "Close" not in df:
+            return {"error": "No data retrieved from yfinance"}
 
-        df["EMA_rapida"] = df["4. close"].ewm(span=5, adjust=False).mean()
-        df["EMA_lenta"] = df["4. close"].ewm(span=20, adjust=False).mean()
+        df["EMA_rapida"] = df["Close"].ewm(span=5, adjust=False).mean()
+        df["EMA_lenta"] = df["Close"].ewm(span=20, adjust=False).mean()
 
         last = df.iloc[-1]
         prev = df.iloc[-2]
@@ -27,7 +21,7 @@ def trend_swing_index(symbol: str, api_key: str) -> dict:
             indice = 1.0
         else:
             diferencia = last["EMA_rapida"] - last["EMA_lenta"]
-            rango = df["4. close"].max() - df["4. close"].min()
+            rango = df["Close"].max() - df["Close"].min()
             normalizado = round(diferencia / rango, 4)
             indice = max(-1, min(1, -normalizado))
 
