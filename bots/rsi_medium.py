@@ -1,48 +1,45 @@
+import requests
 
-import yfinance as yf
-import pandas as pd
+API_KEY = "TU_API_KEY_AQUI"
 
-def rsi_medium_index(symbol: str) -> dict:
+def rsi_medium_index(ticker="AAPL"):
+    url = f"https://api.twelvedata.com/rsi?symbol={ticker}&interval=1day&outputsize=100&time_period=14&apikey={API_KEY}"
+
     try:
-        df = yf.download(symbol, period="6mo", interval="1d")
+        response = requests.get(url)
+        data = response.json()
 
-        if df.empty or "Close" not in df:
+        if "values" not in data:
             return {
-                "ticker": symbol,
+                "ticker": ticker,
                 "horizon": "Medium-Term",
                 "indice": 0,
-                "note": "No data available, returning neutral signal"
+                "note": data.get("message", "No data from API, returning neutral signal")
             }
 
-        # Calcular RSI de 14 días
-        delta = df["Close"].diff()
-        gain = (delta.where(delta > 0, 0)).rolling(window=14).mean()
-        loss = (-delta.where(delta < 0, 0)).rolling(window=14).mean()
-        rs = gain / loss
-        rsi = 100 - (100 / (1 + rs))
+        latest_rsi = float(data["values"][0]["rsi"])
 
-        rsi_actual = rsi.iloc[-1]
-
-        # Convertir RSI a índice de -1 a 1
-        if rsi_actual < 30:
-            indice = -1.0
-        elif rsi_actual > 70:
-            indice = 1.0
+        if latest_rsi < 30:
+            indice = round((30 - latest_rsi) / 30 * -1, 2)
+            note = f"RSI: {latest_rsi} → Oversold"
+        elif latest_rsi > 70:
+            indice = round((latest_rsi - 70) / 30 * 1, 2)
+            note = f"RSI: {latest_rsi} → Overbought"
         else:
-            indice = (rsi_actual - 50) / 20  # RSI de 50 da 0, 60 da 0.5, 40 da -0.5, etc.
-            indice = max(-1, min(1, round(indice, 4)))
+            indice = 0
+            note = f"RSI: {latest_rsi} → Neutral range"
 
         return {
-            "ticker": symbol,
+            "ticker": ticker,
             "horizon": "Medium-Term",
-            "indice": indice
+            "indice": indice,
+            "note": note
         }
 
     except Exception as e:
         return {
-            "ticker": symbol,
+            "ticker": ticker,
             "horizon": "Medium-Term",
             "indice": 0,
-            "note": "Error fetching data, defaulted to neutral",
-            "detail": str(e)
+            "note": f"Error: {str(e)}"
         }
