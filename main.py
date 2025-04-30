@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from random import random
 from bots.trend_swing import trend_swing_index
 from bots.rsi_medium import rsi_medium_index
 
@@ -13,28 +12,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-@app.get("/indices")
-def obtener_indices():
-    acciones = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA"]
-    horizontes = ["Intraday", "Swing", "Medium-Term"]
-
-    resultado = []
-
-    for accion in acciones:
-        data = {
-            "ticker": accion,
-            "estrategias": []
-        }
-        for horizonte in horizontes:
-            indice_simulado = round(-1 + 2 * random(), 2)
-            data["estrategias"].append({
-                "horizonte": horizonte,
-                "indice": indice_simulado
-            })
-        resultado.append(data)
-
-    return {"acciones": resultado}
 
 @app.get("/indice_swing")
 def calcular_indice_swing():
