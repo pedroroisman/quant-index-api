@@ -2,7 +2,7 @@ from random import uniform
 
 @app.get("/indices")
 def obtener_indices():
-    acciones = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA"]
+    acciones = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA", "META", "GOOGL", "NFLX"]
     horizontes = ["Intraday", "Swing", "Medium-Term"]
 
     resultado = []
@@ -22,4 +22,3 @@ def obtener_indices():
         })
 
     return {"acciones": resultado}
-
