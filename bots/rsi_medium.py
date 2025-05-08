@@ -9,12 +9,12 @@ def rsi_medium_index(ticker="AAPL"):
         response = requests.get(url)
         data = response.json()
 
-        if "values" not in data:
+        if "values" not in data or not data["values"]:
             return {
                 "ticker": ticker,
                 "horizon": "Medium-Term",
                 "indice": 0,
-                "note": data.get("message", "No data from API, returning neutral signal")
+                "note": data.get("message", "No data available, returning neutral signal")
             }
 
         latest_rsi = float(data["values"][0]["rsi"])
