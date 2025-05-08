@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from bots.rsi_medium import rsi_medium_index
 from bots.trend_swing import trend_swing_index
+import time
 
 app = FastAPI()
 
@@ -21,14 +22,19 @@ def obtener_live_signals():
     result = {}
 
     for ticker in tickers:
+        swing = trend_swing_index(ticker)
+        time.sleep(1)  # Evita exceder límite de API gratuita
+        medium = rsi_medium_index(ticker)
+        time.sleep(1)
+
         result[ticker] = {
             "Swing": {
-                "indice": trend_swing_index(ticker).get("signal", 0),
-                "note": trend_swing_index(ticker).get("note", "")
+                "indice": swing.get("signal", 0),
+                "note": swing.get("note", "")
             },
             "Medium-Term": {
-                "indice": rsi_medium_index(ticker).get("signal", 0),
-                "note": rsi_medium_index(ticker).get("note", "")
+                "indice": medium.get("signal", 0),
+                "note": medium.get("note", "")
             }
         }
 
