@@ -2,11 +2,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from bots.rsi_medium import rsi_medium_index
-from random import uniform
+from bots.trend_swing import trend_swing_index
 
 app = FastAPI()
 
-# Habilitar CORS para permitir conexiones desde el frontend
+# CORS para permitir acceso desde frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -15,46 +15,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/indices")
-def obtener_indices():
-    acciones = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA", "META", "GOOGL", "NFLX"]
-    horizontes = ["Intraday", "Swing", "Medium-Term"]
+@app.get("/live_signals")
+def obtener_live_signals():
+    tickers = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA"]
+    result = {}
 
-    resultado = []
+    for ticker in tickers:
+        result[ticker] = {
+            "Swing": {
+                "indice": trend_swing_index(ticker).get("signal", 0),
+                "note": trend_swing_index(ticker).get("note", "")
+            },
+            "Medium-Term": {
+                "indice": rsi_medium_index(ticker).get("signal", 0),
+                "note": rsi_medium_index(ticker).get("note", "")
+            }
+        }
 
-    for accion in acciones:
-        estrategias = []
-        for horizonte in horizontes:
-            indice_simulado = round(uniform(-1, 1), 2)
-            estrategias.append({
-                "horizonte": horizonte,
-                "indice": indice_simulado
-            })
-
-        resultado.append({
-            "ticker": accion,
-            "estrategias": estrategias
-        })
-
-    return {"acciones": resultado}
-
-@app.get("/indice_medium-term/{ticker}")
-def obtener_indice_rsi(ticker: str):
-    resultado = rsi_medium_index(ticker)
-
-    return {
-        "indice": resultado.get("signal", 0),
-        "note": resultado.get("note", "")
-    }
-
-
-from bots.trend_swing import trend_swing_index
-
-@app.get("/indice_swing/{ticker}")
-def obtener_indice_swing(ticker: str):
-    resultado = trend_swing_index(ticker)
-
-    return {
-        "indice": resultado.get("signal", 0),
-        "note": resultado.get("note", "")
-    }
+    return result
