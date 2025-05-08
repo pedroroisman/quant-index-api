@@ -23,9 +23,9 @@ def obtener_live_signals():
 
     for ticker in tickers:
         swing = trend_swing_index(ticker)
-        time.sleep(1)  # Evita exceder límite de API gratuita
+        time.sleep(4)  # Espaciar para evitar el límite de Twelve Data
         medium = rsi_medium_index(ticker)
-        time.sleep(1)
+        time.sleep(4)
 
         result[ticker] = {
             "Swing": {
