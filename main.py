@@ -46,3 +46,15 @@ def obtener_indice_rsi(ticker: str):
         "indice": resultado.get("signal", 0),
         "note": resultado.get("note", "")
     }
+
+
+from bots.trend_swing import trend_swing_index
+
+@app.get("/indice_swing/{ticker}")
+def obtener_indice_swing(ticker: str):
+    resultado = trend_swing_index(ticker)
+
+    return {
+        "indice": resultado.get("signal", 0),
+        "note": resultado.get("note", "")
+    }
