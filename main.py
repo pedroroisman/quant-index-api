@@ -13,10 +13,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-@app.get("/indice_swing")
-def calcular_indice_swing():
-    return trend_swing_index("AAPL")
+@app.get("/indice_swing/{ticker}")
+def indice_swing(ticker: str):
+    return trend_swing_index(ticker)
 
-@app.get("/indice_medium")
-def calcular_indice_medium():
-    return rsi_medium_index("AAPL")
+@app.get("/indice_medium/{ticker}")
+def indice_medium(ticker: str):
+    return rsi_medium_index(ticker)
