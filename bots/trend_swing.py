@@ -9,7 +9,7 @@ def trend_swing_index(ticker="AAPL"):
         response = requests.get(url)
         data = response.json()
 
-        if "values" not in data:
+        if "values" not in data or len(data["values"]) < 20:
             return {
                 "ticker": ticker,
                 "horizon": "Swing",
@@ -22,10 +22,8 @@ def trend_swing_index(ticker="AAPL"):
         current_price = float(data["values"][0]["close"])
         average_price = sum(closes) / len(closes)
 
+        # Diferencia relativa para normalizar
         diff = current_price - average_price
-        spread = abs(diff) / average_price
-
-        # Normalizamos a -1 a 1
         indice = round(max(min(diff / average_price * 10, 1), -1), 2)
 
         return {
