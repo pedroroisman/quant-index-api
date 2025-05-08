@@ -7,7 +7,6 @@ import time
 
 app = FastAPI()
 
-# CORS para permitir acceso desde frontend
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -18,12 +17,12 @@ app.add_middleware(
 
 @app.get("/live_signals")
 def obtener_live_signals():
-    tickers = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA"]
+    tickers = ["AAPL", "TSLA", "AMZN"]  # Solo 3 para no superar el límite gratuito
     result = {}
 
     for ticker in tickers:
         swing = trend_swing_index(ticker)
-        time.sleep(4)  # Espaciar para evitar el límite de Twelve Data
+        time.sleep(4)
         medium = rsi_medium_index(ticker)
         time.sleep(4)
 
