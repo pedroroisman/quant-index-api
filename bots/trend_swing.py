@@ -1,4 +1,6 @@
+
 import requests
+from datetime import datetime
 
 API_KEY = "2a0d5658f5204b06bb2d0ce50d9b7b16"
 
@@ -13,30 +15,31 @@ def trend_swing_index(ticker="AAPL"):
             return {
                 "ticker": ticker,
                 "horizon": "Swing",
-                "indice": 0,
-                "note": data.get("message", "No data available, returning neutral signal")
+                "signal": 0,
+                "note": data.get("message", "No data available, returning neutral signal"),
+                "timestamp": datetime.utcnow().isoformat() + "Z"
             }
 
-        # Tomamos los últimos 20 valores y calculamos la media de cierre
         closes = [float(item["close"]) for item in data["values"][:20]]
         current_price = float(data["values"][0]["close"])
         average_price = sum(closes) / len(closes)
-
-        # Diferencia relativa para normalizar
         diff = current_price - average_price
-        indice = round(max(min(diff / average_price * 10, 1), -1), 2)
+
+        signal = round(max(min(diff / average_price * 10, 1), -1), 2)
 
         return {
             "ticker": ticker,
             "horizon": "Swing",
-            "indice": indice,
-            "note": f"Price: {current_price}, Avg(20): {round(average_price, 2)}"
+            "signal": signal,
+            "note": f"Price: {current_price}, Avg(20): {round(average_price, 2)}",
+            "timestamp": datetime.utcnow().isoformat() + "Z"
         }
 
     except Exception as e:
         return {
             "ticker": ticker,
             "horizon": "Swing",
-            "indice": 0,
-            "note": f"Error: {str(e)}"
+            "signal": 0,
+            "note": f"Error: {str(e)}",
+            "timestamp": datetime.utcnow().isoformat() + "Z"
         }
