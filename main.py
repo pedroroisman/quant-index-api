@@ -1,5 +1,3 @@
-from random import uniform
-
 @app.get("/indices")
 def obtener_indices():
     acciones = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA", "META", "GOOGL", "NFLX"]
