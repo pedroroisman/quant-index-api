@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from bots import rsi_medium_finnhub_multi as rsi_bot
-from bots import trend_swing_finnhub_multi as swing_bot
+from bots import rsi_medium as rsi_bot
+from bots import trend_swing as swing_bot
 
 app = FastAPI()
 
