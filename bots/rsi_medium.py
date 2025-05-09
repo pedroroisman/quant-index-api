@@ -1,6 +1,6 @@
 import requests
 
-API_KEY = "d0f2kn9r01qsv9eev9p0d0f2kn9r01qsv9eev9pg"
+API_KEY = "d0f6bbhr01qsv9efl33gd0f6bbhr01qsv9efl340"
 TICKERS = ['AAPL', 'TSLA', 'AMZN', 'MSFT', 'NVDA']
 
 def get_rsi(symbol):
