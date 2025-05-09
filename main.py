@@ -1,58 +1,39 @@
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from bots.rsi_medium import rsi_medium_index
-from bots.trend_swing import trend_swing_index
-import time
+from bots import rsi_medium_finnhub_multi as rsi_bot
+from bots import trend_swing_finnhub_multi as swing_bot
 
 app = FastAPI()
 
-# Cache en memoria: {ticker: {"data": {...}, "timestamp": ...}}
-cache = {}
-
-# Tiempo de validez del cache (en segundos)
-CACHE_TTL = 120  # 2 minutos
-
-# CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
-    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 @app.get("/live_signals")
-def obtener_live_signals():
-    tickers = ["AAPL", "TSLA", "AMZN"]
-    result = {}
+def live_signals():
+    import importlib
+    importlib.reload(rsi_bot)
+    importlib.reload(swing_bot)
 
+    tickers = rsi_bot.TICKERS
+    data = {}
     for ticker in tickers:
-        now = time.time()
-        # Usar cache si existe y no venció
-        if ticker in cache and now - cache[ticker]["timestamp"] < CACHE_TTL:
-            result[ticker] = cache[ticker]["data"]
-            continue
+        rsi = rsi_bot.get_rsi(ticker)
+        price = rsi_bot.get_price(ticker)
+        swing = swing_bot.get_swing_index(ticker)
 
-        # Si no hay cache válido, obtener datos en vivo
-        swing = trend_swing_index(ticker)
-        time.sleep(4)
-        medium = rsi_medium_index(ticker)
-        time.sleep(4)
-
-        data = {
+        data[ticker] = {
             "Swing": {
-                "indice": swing.get("signal", 0),
-                "note": swing.get("note", "")
+                "indice": swing["index"] if swing else 0,
+                "note": f"Price: {swing['price']}, Avg(20): {swing['avg']}" if swing else "No data"
             },
             "Medium-Term": {
-                "indice": medium.get("signal", 0),
-                "note": medium.get("note", "")
+                "indice": 0 if rsi is None else 1 if rsi > 70 else -1 if rsi < 30 else 0,
+                "note": f"RSI: {rsi:.2f} → {'Overbought' if rsi > 70 else 'Oversold' if rsi < 30 else 'Neutral range'}"
             }
         }
 
-        # Guardar en cache
-        cache[ticker] = {"data": data, "timestamp": now}
-        result[ticker] = data
-
-    return result
+    return data
