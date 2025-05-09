@@ -7,6 +7,7 @@ def get_swing_index(ticker: str):
     try:
         url = f"https://finnhub.io/api/v1/stock/candle?symbol={ticker}&resolution=D&count=20&token={API_KEY}"
         res = requests.get(url).json()
+        print(f"[SWING RAW] {ticker}: {res}")  # Debug
 
         if res.get("s") != "ok":
             return None
