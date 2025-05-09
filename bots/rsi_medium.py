@@ -1,49 +1,25 @@
 import requests
-from datetime import datetime
+import time
 
-API_KEY = "2a0d5658f5204b06bb2d0ce50d9b7b16"
+API_KEY = "d0f2kn9r01qsv9eev9p0d0f2kn9r01qsv9eev9pg"
+TICKERS = ['AAPL', 'TSLA', 'AMZN', 'MSFT', 'NVDA']
 
-def rsi_medium_index(ticker="AAPL"):
-    url = f"https://api.twelvedata.com/rsi?symbol={ticker}&interval=1day&outputsize=100&time_period=14&apikey={API_KEY}"
+def get_rsi(symbol):
+    url = f"https://finnhub.io/api/v1/indicator?symbol={symbol}&resolution=D&indicator=rsi&timeperiod=14&token={API_KEY}"
+    res = requests.get(url).json()
+    rsi = res.get("rsi", [])
+    return rsi[-1] if rsi else None
 
+def get_price(symbol):
+    url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={API_KEY}"
+    res = requests.get(url).json()
+    return res.get("c")
+
+for ticker in TICKERS:
     try:
-        response = requests.get(url)
-        data = response.json()
-
-        if "values" not in data or not data["values"]:
-            return {
-                "ticker": ticker,
-                "horizon": "Medium-Term",
-                "signal": 0,
-                "note": data.get("message", "No data available, returning neutral signal"),
-                "timestamp": datetime.utcnow().isoformat() + "Z"
-            }
-
-        latest_rsi = float(data["values"][0]["rsi"])
-
-        if latest_rsi < 30:
-            signal = round((30 - latest_rsi) / 30 * -1, 2)
-            note = f"RSI: {latest_rsi} → Oversold"
-        elif latest_rsi > 70:
-            signal = round((latest_rsi - 70) / 30 * 1, 2)
-            note = f"RSI: {latest_rsi} → Overbought"
-        else:
-            signal = 0
-            note = f"RSI: {latest_rsi} → Neutral range"
-
-        return {
-            "ticker": ticker,
-            "horizon": "Medium-Term",
-            "signal": signal,
-            "note": note,
-            "timestamp": datetime.utcnow().isoformat() + "Z"
-        }
-
+        rsi = get_rsi(ticker)
+        price = get_price(ticker)
+        print(f"{ticker} - RSI: {rsi}, Price: {price}")
+        time.sleep(2.5)  # delay para no superar límites
     except Exception as e:
-        return {
-            "ticker": ticker,
-            "horizon": "Medium-Term",
-            "signal": 0,
-            "note": f"Error: {str(e)}",
-            "timestamp": datetime.utcnow().isoformat() + "Z"
-        }
+        print(f"Error con {ticker}: {e}")
