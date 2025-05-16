@@ -3,12 +3,14 @@ import requests
 import pandas as pd
 import time
 
-API_KEY = "6I2S3R4VPPES4U0O"  # Reemplazar por tu clave real
+API_KEY = "6I2S3R4VPPES4U0O"
 
-def get_swing_index(symbol, multiplicador=5):
+def get_swing_index(symbol="TSLA", multiplicador=5):
     try:
         url = f"https://www.alphavantage.co/query?function=TIME_SERIES_DAILY&symbol={symbol}&outputsize=compact&apikey={API_KEY}"
+        print(f"[SWING] Fetching URL: {url}")
         res = requests.get(url).json()
+        print(f"[SWING] Raw response: {res}")
         series = res.get("Time Series (Daily)", {})
         if not series or len(series) < 20:
             return None
