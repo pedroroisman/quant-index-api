@@ -1,3 +1,4 @@
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from bots import rsi_medium as rsi_bot
@@ -28,12 +29,12 @@ def live_signals():
 
             data[ticker] = {
                 "Swing": {
-                    "indice": swing["index"] if swing else 0,
-                    "note": f"Price: {swing['price']}, Avg(20): {swing['avg']}" if swing else "Data unavailable"
+                    "indice": swing["index"] if swing is not None else 0,
+                    "note": f"Price: {swing['price']}, Avg(20): {swing['avg']}" if swing is not None else "Data unavailable"
                 },
                 "Medium-Term": {
                     "indice": 0 if rsi is None else 1 if rsi > 70 else -1 if rsi < 30 else 0,
-                    "note": f"RSI: {rsi:.2f} → {'Overbought' if rsi > 70 else 'Oversold' if rsi < 30 else 'Neutral range'}" if rsi else "RSI unavailable"
+                    "note": f"RSI: {rsi:.2f} → {'Overbought' if rsi > 70 else 'Oversold' if rsi < 30 else 'Neutral range'}" if rsi is not None else "RSI unavailable"
                 }
             }
         except Exception as e:
