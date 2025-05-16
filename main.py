@@ -17,7 +17,7 @@ app.add_middleware(
 
 # Cache: {ticker: {"data": ..., "timestamp": ...}}
 CACHE = {}
-CACHE_DURATION = timedelta(minutes=20)
+CACHE_DURATION = timedelta(minutes=30)  # Recomendado para Alpha Vantage
 
 @app.get("/live_signals")
 def live_signals():
