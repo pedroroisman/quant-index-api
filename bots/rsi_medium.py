@@ -27,13 +27,20 @@ def get_price(symbol):
 def get_rsi_index(symbol):
     rsi = get_rsi(symbol)
     if rsi is None:
-        return 0, "RSI unavailable"
-    if rsi < 30:
-        return -1.0, f"RSI: {rsi:.2f} → Oversold"
-    elif rsi > 70:
-        return 1.0, f"RSI: {rsi:.2f} → Overbought"
+        return 0, "RSI unavailable", "low"
+    
+    if rsi < 35:
+        index = round((rsi - 50) / 15, 1)
+    elif rsi > 65:
+        index = round((rsi - 50) / 15, 1)
     else:
-        index = (rsi - 50) / 20
-        index = max(-1, min(1, round(index, 2)))
-        label = "Neutral range"
-        return index, f"RSI: {rsi:.2f} → {label}"
+        index = 0
+
+    index = max(-1, min(1, index))
+    label = (
+        "Overbought" if index == 1 else
+        "Oversold" if index == -1 else
+        "Neutral range"
+    )
+    confidence = "high" if abs(index) == 1 else "moderate" if index != 0 else "low"
+    return index, f"RSI: {rsi:.2f} → {label}", confidence
