@@ -28,8 +28,11 @@ def live_signals():
             price = rsi_bot.get_price(ticker)
             swing = swing_bot.get_swing_index(ticker)
 
-            rsi_valid = rsi is not None and not math.isnan(rsi)
-            swing_valid = swing is not None
+            print(f"🔎 {ticker} - RSI type: {type(rsi)}, value: {rsi}")
+            print(f"🔎 {ticker} - SWING type: {type(swing)}, value: {swing}")
+
+            rsi_valid = isinstance(rsi, (int, float)) and not math.isnan(rsi)
+            swing_valid = swing is not None and isinstance(swing, dict)
 
             data[ticker] = {
                 "Swing": {
