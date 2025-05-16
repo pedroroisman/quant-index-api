@@ -1,25 +1,25 @@
 
-import yfinance as yf
+import requests
 
 TICKERS = ['AAPL', 'TSLA', 'AMZN', 'MSFT', 'NVDA']
+API_KEY = "2a0d5658f5204b06bb2d0ce50d9b7b16"
 
-def get_rsi(symbol, period=14):
+def get_rsi(symbol, interval="1day", time_period=14):
     try:
-        df = yf.download(symbol, period="1mo", interval="1d", progress=False)
-        delta = df['Close'].diff()
-        gain = delta.where(delta > 0, 0).rolling(window=period).mean()
-        loss = -delta.where(delta < 0, 0).rolling(window=period).mean()
-        rs = gain / loss
-        rsi = 100 - (100 / (1 + rs))
-        return rsi.iloc[-1].item() if not rsi.empty else None
+        url = f"https://api.twelvedata.com/rsi?symbol={symbol}&interval={interval}&time_period={time_period}&apikey={API_KEY}"
+        res = requests.get(url).json()
+        rsi_value = res.get("values", [])[0].get("rsi") if res.get("values") else None
+        return float(rsi_value) if rsi_value else None
     except Exception as e:
-        print(f"[RSI yfinance] Error con {symbol}: {e}")
+        print(f"[RSI] Error con {symbol}: {e}")
         return None
 
 def get_price(symbol):
     try:
-        df = yf.download(symbol, period="1d", interval="1m", progress=False)
-        return df['Close'].iloc[-1].item() if not df.empty else None
+        url = f"https://api.twelvedata.com/price?symbol={symbol}&apikey={API_KEY}"
+        res = requests.get(url).json()
+        price = res.get("price")
+        return float(price) if price else None
     except Exception as e:
-        print(f"[PRICE yfinance] Error con {symbol}: {e}")
+        print(f"[PRICE] Error con {symbol}: {e}")
         return None
