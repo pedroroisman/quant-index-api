@@ -23,3 +23,17 @@ def get_price(symbol):
     except Exception as e:
         print(f"[PRICE] Error con {symbol}: {e}")
         return None
+
+def get_rsi_index(symbol):
+    rsi = get_rsi(symbol)
+    if rsi is None:
+        return 0, "RSI unavailable"
+    if rsi < 30:
+        return -1.0, f"RSI: {rsi:.2f} → Oversold"
+    elif rsi > 70:
+        return 1.0, f"RSI: {rsi:.2f} → Overbought"
+    else:
+        index = (rsi - 50) / 20
+        index = max(-1, min(1, round(index, 2)))
+        label = "Neutral range"
+        return index, f"RSI: {rsi:.2f} → {label}"
