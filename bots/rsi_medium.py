@@ -1,25 +1,25 @@
-import requests
 
-API_KEY = "d0f6bbhr01qsv9efl33gd0f6bbhr01qsv9efl340"
+import yfinance as yf
+
 TICKERS = ['AAPL', 'TSLA', 'AMZN', 'MSFT', 'NVDA']
 
-def get_rsi(symbol):
+def get_rsi(symbol, period=14):
     try:
-        url = f"https://finnhub.io/api/v1/indicator?symbol={symbol}&resolution=D&indicator=rsi&timeperiod=14&token={API_KEY}"
-        res = requests.get(url).json()
-        print(f"[RSI RAW] {symbol}: {res}")  # Debug
-        rsi = res.get("rsi", [])
-        return rsi[-1] if rsi else None
+        df = yf.download(symbol, period="1mo", interval="1d", progress=False)
+        delta = df['Close'].diff()
+        gain = delta.where(delta > 0, 0).rolling(window=period).mean()
+        loss = -delta.where(delta < 0, 0).rolling(window=period).mean()
+        rs = gain / loss
+        rsi = 100 - (100 / (1 + rs))
+        return rsi.iloc[-1]
     except Exception as e:
-        print(f"[RSI] Error con {symbol}: {e}")
+        print(f"[RSI yfinance] Error con {symbol}: {e}")
         return None
 
 def get_price(symbol):
     try:
-        url = f"https://finnhub.io/api/v1/quote?symbol={symbol}&token={API_KEY}"
-        res = requests.get(url).json()
-        print(f"[PRICE RAW] {symbol}: {res}")  # Debug
-        return res.get("c")
+        df = yf.download(symbol, period="1d", interval="1m", progress=False)
+        return df['Close'].iloc[-1]
     except Exception as e:
-        print(f"[PRICE] Error con {symbol}: {e}")
+        print(f"[PRICE yfinance] Error con {symbol}: {e}")
         return None

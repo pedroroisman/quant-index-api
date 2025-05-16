@@ -1,23 +1,18 @@
-import requests
 
-API_KEY = "d0f6bbhr01qsv9efl33gd0f6bbhr01qsv9efl340"
+import yfinance as yf
+
 TICKERS = ['AAPL', 'TSLA', 'AMZN', 'MSFT', 'NVDA']
 
-def get_swing_index(ticker: str):
+def get_swing_index(symbol):
     try:
-        url = f"https://finnhub.io/api/v1/stock/candle?symbol={ticker}&resolution=D&count=20&token={API_KEY}"
-        res = requests.get(url).json()
-        print(f"[SWING RAW] {ticker}: {res}")  # Debug
-
-        if res.get("s") != "ok":
+        df = yf.download(symbol, period="1mo", interval="1d", progress=False)
+        closes = df['Close'].dropna()
+        if len(closes) < 20:
             return None
-
-        closes = res["c"]
-        avg = sum(closes) / len(closes)
-        price = closes[-1]
+        avg = closes[-20:].mean()
+        price = closes.iloc[-1]
         index = round((price - avg) / avg, 2)
-
         return {"index": index, "price": price, "avg": round(avg, 2)}
     except Exception as e:
-        print(f"[Swing] Error con {ticker}: {e}")
+        print(f"[SWING yfinance] Error con {symbol}: {e}")
         return None
