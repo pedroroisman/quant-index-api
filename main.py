@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from bots import rsi_medium as rsi_bot
 from bots import trend_swing as swing_bot
 import importlib
-import math
 
 app = FastAPI()
 
@@ -24,24 +23,20 @@ def live_signals():
     data = {}
     for ticker in tickers:
         try:
-            rsi = rsi_bot.get_rsi(ticker)
+            rsi_index, rsi_note = rsi_bot.get_rsi_index(ticker)
             price = rsi_bot.get_price(ticker)
             swing = swing_bot.get_swing_index(ticker)
 
-            print(f"🔎 {ticker} - RSI type: {type(rsi)}, value: {rsi}")
-            print(f"🔎 {ticker} - SWING type: {type(swing)}, value: {swing}")
-
-            rsi_valid = isinstance(rsi, (int, float)) and not math.isnan(rsi)
             swing_valid = swing is not None and isinstance(swing, dict)
 
             data[ticker] = {
                 "Swing": {
                     "indice": swing["index"] if swing_valid else 0,
-                    "note": f"Price: {swing['price']}, Avg(20): {swing['avg']}" if swing_valid else "Data unavailable"
+                    "note": f"Price: {swing['price']}, Avg(20): {swing['avg']}" if swing_valid else "Swing unavailable"
                 },
                 "Medium-Term": {
-                    "indice": 0 if not rsi_valid else 1 if rsi > 70 else -1 if rsi < 30 else 0,
-                    "note": f"RSI: {rsi:.2f} → {'Overbought' if rsi > 70 else 'Oversold' if rsi < 30 else 'Neutral range'}" if rsi_valid else "RSI unavailable"
+                    "indice": rsi_index,
+                    "note": rsi_note
                 }
             }
         except Exception as e:
