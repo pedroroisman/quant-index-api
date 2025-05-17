@@ -1,40 +1,71 @@
 
 import requests
-import pandas as pd
+import json
+from datetime import datetime, timedelta
+import os
 
-API_KEY = "2a0d5658f5204b06bb2d0ce50d9b7b16"
+CACHE_DIR = "cache"
+CACHE_DURATION_MINUTES = 20
 
-def get_swing_index(symbol, multiplicador=5):
+def load_cache(symbol: str, datatype: str):
+    filename = os.path.join(CACHE_DIR, f"{symbol}_{datatype}.json")
+    if not os.path.exists(filename):
+        return None
+    modified_time = datetime.fromtimestamp(os.path.getmtime(filename))
+    if datetime.now() - modified_time > timedelta(minutes=CACHE_DURATION_MINUTES):
+        return None
     try:
-        url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval=1day&outputsize=30&apikey={API_KEY}"
-        res = requests.get(url).json()
-        if "status" in res and res["status"] == "error":
-            print(f"[SWING TwelveData Error] {res.get('message', 'Unknown error')} ({symbol})")
-            return None
-        values = res.get("values", [])
-        if len(values) < 20:
-            return None
-        df = pd.DataFrame(values)
-        df["datetime"] = pd.to_datetime(df["datetime"])
-        df = df.sort_values("datetime")
-        df["close"] = pd.to_numeric(df["close"])
+        with open(filename, "r") as f:
+            return json.load(f)
+    except Exception:
+        return None
 
-        precio_actual = df["close"].iloc[-3:].mean()
-        promedio = df["close"].iloc[-20:].mean()
-        diff = precio_actual - promedio
-        index = round(max(min(diff / promedio * multiplicador, 1), -1), 1)
+def save_cache(symbol: str, datatype: str, data: dict):
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    filename = os.path.join(CACHE_DIR, f"{symbol}_{datatype}.json")
+    with open(filename, "w") as f:
+        json.dump(data, f)
 
-        note = f"Price: {round(precio_actual, 2)}, Avg(20): {round(promedio, 2)}"
-        confidence = "high" if abs(index) == 1 else "moderate"
+def get_swing_index(symbol: str, api_key: str):
+    cached = load_cache(symbol, "swing")
+    if cached:
+        print(f"[SWING CACHE] Using cached data for {symbol}")
+        return cached
 
-        return {
-            "index": index,
-            "price": round(precio_actual, 2),
-            "avg": round(promedio, 2),
+    url = f"https://api.twelvedata.com/time_series?symbol={symbol}&interval=1day&outputsize=30&apikey={api_key}"
+    try:
+        res = requests.get(url)
+        data = res.json()
+        if "values" not in data:
+            print(f"[SWING TwelveData Error] {data.get('message', 'Unknown error')} ({symbol})")
+            return {"indice": 0, "note": "Swing unavailable", "confidence": "low"}
+
+        prices = [float(item["close"]) for item in data["values"][:20]]
+        if len(prices) < 20:
+            return {"indice": 0, "note": "Insufficient data", "confidence": "low"}
+
+        promedio = sum(prices) / len(prices)
+        actual = float(data["values"][0]["close"])
+        diff = actual - promedio
+        indice = round(diff / promedio * 5, 2)
+        indice = max(min(indice, 1), -1)
+
+        note = f"Price: {actual:.2f}, Avg(20): {promedio:.2f}"
+        confidence = "moderate"
+        if abs(indice) >= 0.9:
+            confidence = "high"
+        elif abs(indice) < 0.3:
+            confidence = "low"
+
+        result = {
+            "indice": indice,
             "note": note,
             "confidence": confidence
         }
 
+        save_cache(symbol, "swing", result)
+        return result
+
     except Exception as e:
-        print(f"[SWING] Error con {symbol}: {e}")
-        return None
+        print(f"[SWING Error] {symbol}: {e}")
+        return {"indice": 0, "note": "Swing error", "confidence": "low"}

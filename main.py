@@ -4,7 +4,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from bots import rsi_medium as rsi_bot
 from bots import trend_swing as swing_bot
 import importlib
-from datetime import datetime, timedelta
 
 app = FastAPI()
 
@@ -15,48 +14,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Cache: {ticker: {"data": ..., "timestamp": ...}}
-CACHE = {}
-CACHE_DURATION = timedelta(minutes=20)
-
 @app.get("/live_signals")
 def live_signals():
     importlib.reload(rsi_bot)
     importlib.reload(swing_bot)
 
-    tickers = rsi_bot.TICKERS
+    tickers = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA"]
     data = {}
-    now = datetime.utcnow()
 
     for ticker in tickers:
-        cached = CACHE.get(ticker)
-        if cached and now - cached["timestamp"] < CACHE_DURATION:
-            data[ticker] = cached["data"]
-            continue
-
         try:
-            rsi_index, rsi_note, rsi_conf = rsi_bot.get_rsi_index(ticker)
-            price = rsi_bot.get_price(ticker)
-            swing = swing_bot.get_swing_index(ticker)
+            rsi_result = rsi_bot.get_rsi_index(ticker, api_key="2a0d5658f5204b06bb2d0ce50d9b7b16")
+            swing_result = swing_bot.get_swing_index(ticker, api_key="2a0d5658f5204b06bb2d0ce50d9b7b16")
 
-            swing_valid = swing is not None and isinstance(swing, dict)
-
-            result = {
-                "Swing": {
-                    "indice": swing["index"] if swing_valid else 0,
-                    "note": swing["note"] if swing_valid else "Swing unavailable",
-                    "confidence": swing["confidence"] if swing_valid else "low"
-                },
-                "Medium-Term": {
-                    "indice": rsi_index,
-                    "note": rsi_note,
-                    "confidence": rsi_conf
-                }
+            data[ticker] = {
+                "Swing": swing_result,
+                "Medium-Term": rsi_result
             }
-
-            CACHE[ticker] = {"data": result, "timestamp": now}
-            data[ticker] = result
-
         except Exception as e:
             data[ticker] = {
                 "Swing": {"indice": 0, "note": f"Swing error: {e}", "confidence": "low"},

@@ -1,54 +1,70 @@
 
 import requests
-import time
+import json
+from datetime import datetime, timedelta
+import os
 
-TICKERS = ['AAPL', 'TSLA', 'AMZN', 'MSFT', 'NVDA']
-API_KEY = "2a0d5658f5204b06bb2d0ce50d9b7b16"
+CACHE_DIR = "cache"
+CACHE_DURATION_MINUTES = 20
 
-def get_rsi(symbol, interval="1day", time_period=14):
+def load_cache(symbol: str, datatype: str):
+    filename = os.path.join(CACHE_DIR, f"{symbol}_{datatype}.json")
+    if not os.path.exists(filename):
+        return None
+    modified_time = datetime.fromtimestamp(os.path.getmtime(filename))
+    if datetime.now() - modified_time > timedelta(minutes=CACHE_DURATION_MINUTES):
+        return None
     try:
-        url = f"https://api.twelvedata.com/rsi?symbol={symbol}&interval={interval}&time_period={time_period}&apikey={API_KEY}"
-        res = requests.get(url).json()
-        if "status" in res and res["status"] == "error":
-            print(f"[RSI TwelveData Error] {res.get('message', 'Unknown error')} ({symbol})")
-            return None
-        values = res.get("values", [])
-        if not values:
-            return None
-        return float(values[0]["rsi"])
-    except Exception as e:
-        print(f"[RSI] Error con {symbol}: {e}")
+        with open(filename, "r") as f:
+            return json.load(f)
+    except Exception:
         return None
 
-def get_price(symbol):
+def save_cache(symbol: str, datatype: str, data: dict):
+    os.makedirs(CACHE_DIR, exist_ok=True)
+    filename = os.path.join(CACHE_DIR, f"{symbol}_{datatype}.json")
+    with open(filename, "w") as f:
+        json.dump(data, f)
+
+def get_rsi_index(symbol: str, api_key: str):
+    cached = load_cache(symbol, "rsi")
+    if cached:
+        print(f"[RSI CACHE] Using cached data for {symbol}")
+        return cached
+
+    url = f"https://api.twelvedata.com/rsi?symbol={symbol}&interval=1day&apikey={api_key}&outputsize=100"
     try:
-        url = f"https://api.twelvedata.com/price?symbol={symbol}&apikey={API_KEY}"
-        res = requests.get(url).json()
-        if "status" in res and res["status"] == "error":
-            print(f"[PRICE TwelveData Error] {res.get('message', 'Unknown error')} ({symbol})")
-            return None
-        return float(res["price"])
+        res = requests.get(url)
+        data = res.json()
+        if "values" not in data:
+            print(f"[RSI TwelveData Error] {data.get('message', 'Unknown error')} ({symbol})")
+            return {"indice": 0, "note": "RSI unavailable", "confidence": "low"}
+
+        rsi_value = float(data["values"][0]["rsi"])
+        note = f"RSI: {rsi_value:.2f}"
+        confidence = "low"
+        indice = 0
+
+        if rsi_value < 35:
+            indice = round((35 - rsi_value) / 35, 2)
+            note += " → Oversold"
+            confidence = "moderate" if indice < 0.7 else "high"
+        elif rsi_value > 65:
+            indice = round((rsi_value - 65) / 35, 2)
+            note += " → Overbought"
+            confidence = "moderate" if indice < 0.7 else "high"
+        else:
+            note += " → Neutral range"
+
+        result = {
+            "indice": min(indice, 1),
+            "note": note,
+            "confidence": confidence
+        }
+
+        save_cache(symbol, "rsi", result)
+        return result
+
     except Exception as e:
-        print(f"[PRICE] Error con {symbol}: {e}")
-        return None
-
-def get_rsi_index(symbol):
-    rsi = get_rsi(symbol)
-    if rsi is None:
-        return 0, "RSI unavailable", "low"
-
-    if rsi < 35:
-        index = round((rsi - 50) / 15, 1)
-    elif rsi > 65:
-        index = round((rsi - 50) / 15, 1)
-    else:
-        index = 0
-
-    index = max(-1, min(1, index))
-    label = (
-        "Overbought" if index == 1 else
-        "Oversold" if index == -1 else
-        "Neutral range"
-    )
-    confidence = "high" if abs(index) == 1 else "moderate" if index != 0 else "low"
-    return index, f"RSI: {rsi:.2f} → {label}", confidence
+        print(f"[RSI Error] {symbol}: {e}")
+        return {"indice": 0, "note": "RSI error", "confidence": "low"}
