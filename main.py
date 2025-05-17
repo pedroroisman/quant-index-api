@@ -1,13 +1,13 @@
 from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware  # 👈 Importá esto
+from fastapi.middleware.cors import CORSMiddleware
 from bots import rsi_medium, trend_swing
 
 app = FastAPI()
 
-# 👇 Agregá esta configuración de CORS
+# Habilitamos CORS para permitir solicitudes desde el frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # También podés usar ["https://quant-index-react.vercel.app"]
+    allow_origins=["*"],  # Podés poner tu dominio exacto si querés restringir: ["https://quant-index-react.vercel.app"]
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
