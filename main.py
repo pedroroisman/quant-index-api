@@ -10,7 +10,7 @@ def get_live_signals():
     results = {}
     for ticker in TICKERS:
         results[ticker] = {
-            "Swing": trend_swing.get_swing_index(ticker),
-            "Medium-Term": rsi_medium.get_rsi_index(ticker)
+            "1-5 days": trend_swing.get_swing_index(ticker),
+            "7-30 days": rsi_medium.get_rsi_index(ticker)
         }
     return results
