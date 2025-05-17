@@ -1,0 +1,30 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+
+# VS Code
+.vscode/
+
+# Entornos virtuales
+env/
+.venv/
+ENV/
+env.bak/
+venv/
+
+# Archivos de entorno
+.env
+.env.*
+
+# Archivos de logs
+*.log
+
+# Archivos de sistema
+.DS_Store
+Thumbs.db
+
+# Cache de paquetes
+.cache/
