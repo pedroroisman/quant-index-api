@@ -1,7 +1,17 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware  # 👈 Importá esto
 from bots import rsi_medium, trend_swing
 
 app = FastAPI()
+
+# 👇 Agregá esta configuración de CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # También podés usar ["https://quant-index-react.vercel.app"]
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 TICKERS = ["AAPL", "TSLA", "AMZN", "MSFT", "NVDA"]
 
